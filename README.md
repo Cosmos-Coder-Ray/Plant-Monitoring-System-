@@ -44,6 +44,8 @@ This project uses an Arduino UNO along with a DHT11, soil moisture sensor, rain 
 ---
 
 ## 🧪 Circuit Connections
+> Open circuit_image.png for circuit diagram
+> Or you can visit (for detailed circuit diagram) --> https://app.cirkitdesigner.com/project/5303e27d-d1a4-4d36-a6ac-f7b6991dc47d 
 
 ### 🟢 Sensor Wiring
 
