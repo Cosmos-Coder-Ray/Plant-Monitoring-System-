@@ -125,8 +125,4 @@ This project is open-source under the MIT License. Feel free to fork and modify!
 
 ---
 
-## ✍️ Author
-
-Created by **[Your Name]**  
-Student at **[Your School Name]** | Class **[Your Class & Section]**
 
