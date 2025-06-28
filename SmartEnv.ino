@@ -1,88 +1,95 @@
-#include <Adafruit_SSD1306.h>
-#include <Adafruit_GFX.h>
-#include <DHT.h>
+#include <SPI.h>
 #include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <DHT.h>
 
-// === OLED configuration ===
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
-#define OLED_RESET -1
+// OLED parameters
+#define SCREEN_WIDTH 128 
+#define SCREEN_HEIGHT 64 
+#define OLED_RESET -1    
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-// === DHT11 configuration ===
-#define DHTPIN 2
-#define DHTTYPE DHT11
+// DHT11 Sensor parameters
+#define DHTPIN 2     // Digital pin connected to the DHT sensor
+#define DHTTYPE DHT11   // DHT 11
 DHT dht(DHTPIN, DHTTYPE);
-
-// === Sensor Pins ===
-#define SOIL_PIN A0
-#define RAIN_PIN 3
-#define BUZZER_PIN 9
 
 void setup() {
   Serial.begin(9600);
-  dht.begin();
-  pinMode(RAIN_PIN, INPUT);
-  pinMode(BUZZER_PIN, OUTPUT);
+  Serial.println(F("DHT11 and OLED Test!"));
 
-  // Initialize OLED
-  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
-    Serial.println("OLED display not found!");
-    while (true); // stop here if OLED not found
+  // Initialize OLED display
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { 
+    Serial.println(F("SSD1306 allocation failed"));
+    for (;;); // Don't proceed, loop forever
   }
 
-  display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(SSD1306_WHITE);
-  display.setCursor(10, 25);
-  display.println("Smart Env Monitor");
-  display.display();
-  delay(2000); // Startup message
+  display.display(); // Show initial Adafruit logo
+  delay(2000);
+  display.clearDisplay(); // Clear the buffer
+
+  // Initialize DHT sensor
+  dht.begin();
 }
 
 void loop() {
-  // === Read Sensor Values ===
-  float temperature = dht.readTemperature();
-  float humidity = dht.readHumidity();
-  int soilValue = analogRead(SOIL_PIN);
-  bool isRaining = digitalRead(RAIN_PIN) == LOW;
+  // Wait a few seconds between measurements.
+  delay(2000); // Read sensor every 2 seconds
 
-  String soilStatus = (soilValue < 400) ? "Dry" : "Wet";
-  String rainStatus = isRaining ? "Yes" : "No";
+  // Read humidity
+  float h = dht.readHumidity();
+  // Read temperature as Celsius (the default)
+  float t = dht.readTemperature();
+  // Read temperature as Fahrenheit (is Fahrenheit is true)
+  float f = dht.readTemperature(true);
 
-  // === Display Data on OLED ===
+  if (isnan(h) || isnan(t) || isnan(f)) {
+    Serial.println(F("Failed to read from DHT sensor!"));
+    display.clearDisplay();
+    display.setTextSize(1);
+    display.setTextColor(SSD1306_WHITE);
+    display.setCursor(0, 0);
+    display.println(F("Failed to read from"));
+    display.println(F("DHT sensor!"));
+    display.display();
+    return;
+  }
+
+  // Compute heat index in Fahrenheit (the default)
+  float hif = dht.computeHeatIndex(f, h);
+  // Compute heat index in Celsius
+  float hic = dht.computeHeatIndex(t, h);
+
+  Serial.print(F("Humidity: "));
+  Serial.print(h);
+  Serial.print(F("%  Temperature: "));
+  Serial.print(t);
+  Serial.print(F("°C "));
+  Serial.print(f);
+  Serial.print(F("°F  Heat index: "));
+  Serial.print(hic);
+  Serial.print(F("°C "));
+  Serial.print(hif);
+  Serial.println(F("°F"));
+
+  // Display values on OLED
   display.clearDisplay();
+  display.setTextSize(2); 
+  display.setTextColor(SSD1306_WHITE); 
+
+  // Display Humidity
   display.setCursor(0, 0);
-  display.print("Temp: "); display.print(temperature); display.println(" C");
-  display.print("Humidity: "); display.print(humidity); display.println(" %");
-  display.print("Soil: "); display.print(soilStatus); display.print(" ("); display.print(soilValue); display.println(")");
-  display.print("Rain: "); display.println(rainStatus);
-  display.display();
+  display.print(F("Hum: "));
+  display.print(h);
+  display.println(F("%"));
 
-  // === Print to Serial Monitor ===
-  Serial.println("===== Environmental Data =====");
-  Serial.print("Temperature: "); Serial.print(temperature); Serial.println(" °C");
-  Serial.print("Humidity   : "); Serial.print(humidity); Serial.println(" %");
-  Serial.print("Soil       : "); Serial.print(soilValue); Serial.print(" -> "); Serial.println(soilStatus);
-  Serial.print("Rain       : "); Serial.println(rainStatus);
-  Serial.println("================================");
-  Serial.println();
+  // Display Temperature in Celsius
+  display.setCursor(0, 25);
+  display.print(F("Temp: "));
+  display.print(t);
+  display.print((char)247); // Degree symbol
+  display.println(F("C"));
 
-  // === Audio Alerts ===
-  if (soilValue < 400) {
-    tone(BUZZER_PIN, 1000, 400); // Dry soil alert
-    delay(600);
-  }
-
-  if (isRaining) {
-    tone(BUZZER_PIN, 1500, 300); // Rain alert
-    delay(500);
-  }
-
-  if (temperature > 35.0) {
-    tone(BUZZER_PIN, 1200, 600); // High temperature alert
-    delay(800);
-  }
-
-  delay(3000); // Wait before next loop cycle
+  display.display(); // Update the display
 }
