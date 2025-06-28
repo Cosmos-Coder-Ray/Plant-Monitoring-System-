@@ -75,7 +75,7 @@ This project uses an Arduino UNO along with a DHT11, soil moisture sensor, rain 
   - `Adafruit SSD1306`
   - `Adafruit GFX`
   - `DHT sensor library`
-- Copy the code from `main.ino` or this repository.
+- Copy the code from `SamrtEnv.ino` or this repository.
 - Select **Arduino UNO** board and upload.
 
 ### 3. Test the System
@@ -87,10 +87,6 @@ This project uses an Arduino UNO along with a DHT11, soil moisture sensor, rain 
   - Heating DHT11 slightly
 
 ---
-
-## 🖥️ Screenshot Preview
-
-> Add OLED image here (optional)
 
 ---
 
